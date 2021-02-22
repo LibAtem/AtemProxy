@@ -251,7 +251,7 @@ namespace AtemProxy
 
                     queuedCommands.RemoveRange(0, removeCount);
                     conn.QueueMessage(builder.Create());
-                    Log.InfoFormat("Length {0} {1}", builder.currentLength , removeCount);
+                    // Log.InfoFormat("Length {0} {1}", builder.currentLength , removeCount);
                     sent++;
                 }
 

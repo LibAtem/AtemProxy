@@ -69,8 +69,6 @@ namespace AtemProxy
             server.StartPingTimer();
             
             
-            //var server = new ProxyServer("10.42.13.95");
-
             /*
             var client = new AtemClient("10.42.13.95");
             client.Connect();
