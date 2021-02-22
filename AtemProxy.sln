@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AtemProxy", "AtemProxy\AtemProxy.csproj", "{00C82FAB-C255-4F6B-BC7E-6E0F798DCBF0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibAtem", "LibAtem\LibAtem\LibAtem.csproj", "{41BB562D-9C43-4A2A-8117-18DC4CDD4C7C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibAtem.Discovery", "LibAtem\LibAtem.Discovery\LibAtem.Discovery.csproj", "{EE6D9FE0-E821-460B-8E40-682075E32F39}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{00C82FAB-C255-4F6B-BC7E-6E0F798DCBF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{00C82FAB-C255-4F6B-BC7E-6E0F798DCBF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{00C82FAB-C255-4F6B-BC7E-6E0F798DCBF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{00C82FAB-C255-4F6B-BC7E-6E0F798DCBF0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{41BB562D-9C43-4A2A-8117-18DC4CDD4C7C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{41BB562D-9C43-4A2A-8117-18DC4CDD4C7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{41BB562D-9C43-4A2A-8117-18DC4CDD4C7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{41BB562D-9C43-4A2A-8117-18DC4CDD4C7C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EE6D9FE0-E821-460B-8E40-682075E32F39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE6D9FE0-E821-460B-8E40-682075E32F39}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE6D9FE0-E821-460B-8E40-682075E32F39}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE6D9FE0-E821-460B-8E40-682075E32F39}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
