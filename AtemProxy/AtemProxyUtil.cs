@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using LibAtem;
+using LibAtem.Commands.Audio;
 using LibAtem.Commands.Audio.Fairlight;
 using LibAtem.Commands.DataTransfer;
 using LibAtem.Net;
@@ -9,11 +10,12 @@ namespace AtemProxy
 {
     public static class AtemProxyUtil
     {
-        
+
         public static readonly Type[] AudioLevelCommands = new[]
         {
             typeof(FairlightMixerMasterLevelsCommand), typeof(FairlightMixerSourceLevelsCommand),
-            typeof(FairlightMixerSendLevelsCommand)
+            typeof(FairlightMixerSendLevelsCommand), typeof(AudioMixerLevelsCommand),
+            typeof(AudioMixerSendLevelsCommand)
         };
 
         public static readonly Type[] TransferCommands = new[]

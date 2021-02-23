@@ -10,13 +10,14 @@ namespace AtemProxy
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(ClientConnectionList));
 
-        private readonly Dictionary<EndPoint, AtemServerConnection> _connections;
+        private readonly Dictionary<EndPoint, AtemServerConnection> _connections =
+            new Dictionary<EndPoint, AtemServerConnection>();
+        private readonly HashSet<AtemServerConnection> _subscribedToAudio = new HashSet<AtemServerConnection>();
         
         public event AtemConnection.PacketHandler OnReceive;
         
         public ClientConnectionList()
         {
-            _connections = new Dictionary<EndPoint, AtemServerConnection>();
         }
 
         public AtemServerConnection FindOrCreateConnection(EndPoint ep, out bool isNew)
@@ -49,6 +50,11 @@ namespace AtemProxy
             {
                 _connections.Clear();
             }
+
+            lock (_subscribedToAudio)
+            {
+                _subscribedToAudio.Clear();
+            }
         }
 
         private void RemoveTimedOut(object sender)
@@ -62,6 +68,12 @@ namespace AtemProxy
             lock (_connections)
             {
                 _connections.Remove(conn.Endpoint);
+            }
+
+            lock (_subscribedToAudio)
+            {
+                // var initSize = _subscribedToAudio.Count;
+                _subscribedToAudio.Remove(conn);
             }
         }
         
@@ -106,6 +118,49 @@ namespace AtemProxy
                         }
                     }
                 }
+            }
+        }
+
+        public void BroadcastAudioLevels(IReadOnlyList<OutboundMessage> messages)
+        {
+            lock (_subscribedToAudio)
+            {
+                foreach (var conn in _subscribedToAudio)
+                {
+                    if (!conn.HasTimedOut)
+                    {
+                        foreach (var msg in messages)
+                        {
+                            conn.QueueMessage(msg);
+                        }
+                    }
+                }
+            }
+        }
+
+        public bool SubscribeAudio(object sender, bool subscribed)
+        {
+            if (sender is AtemServerConnection {HasTimedOut: false} sender2)
+            {
+                lock (_subscribedToAudio)
+                {
+                    if (subscribed)
+                    {
+                        var before = _subscribedToAudio.Count;
+                        _subscribedToAudio.Add(sender2);
+                        return before == 0;
+                    }
+                    else
+                    {
+                        var before = _subscribedToAudio.Count;
+                        _subscribedToAudio.Remove(sender2);
+                        return before != 0 && _subscribedToAudio.Count == 0;
+                    }
+                }
+            }
+            else
+            {
+                return false;
             }
         }
 

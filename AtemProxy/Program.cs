@@ -8,6 +8,8 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using LibAtem;
 using LibAtem.Commands;
+using LibAtem.Commands.Audio;
+using LibAtem.Commands.Audio.Fairlight;
 using LibAtem.Util;
 using log4net;
 using log4net.Config;
@@ -43,6 +45,15 @@ namespace AtemProxy
                     {
                         if (AtemProxyUtil.AudioLevelCommands.Contains(cmd.GetType()))
                         {
+                            if (cmd is AudioMixerSendLevelsCommand sendLevels && server.Connections.SubscribeAudio(sender, sendLevels.SendLevels))
+                            {
+                                log.InfoFormat("Changing legacy levels subscription: {0}", sendLevels.SendLevels);
+                                acceptedCommands.Add(Tuple.Create(cmd, AtemProxyUtil.ParsedCommandToBytes(rawCmd)));
+                            } else if (cmd is FairlightMixerSendLevelsCommand sendLevels2 && server.Connections.SubscribeAudio(sender, sendLevels2.SendLevels))
+                            {
+                                log.InfoFormat("Changing fairlight levels subscription: {0}", sendLevels2.SendLevels);
+                                acceptedCommands.Add(Tuple.Create(cmd, AtemProxyUtil.ParsedCommandToBytes(rawCmd)));
+                            }
                         }
                         else if (AtemProxyUtil.LockCommands.Contains(cmd.GetType()))
                         {
@@ -104,6 +115,11 @@ namespace AtemProxy
 
                 var messages = AtemProxyUtil.CommandsToMessages(commands.Select(c => c.Item2).ToList());
                 server.Connections.Broadcast(messages);
+            };
+            upstream.OnAudioLevels += (sender, commands) =>
+            {
+                var messages = AtemProxyUtil.CommandsToMessages(commands);
+                server.Connections.BroadcastAudioLevels(messages);
             };
             
             upstream.Start();

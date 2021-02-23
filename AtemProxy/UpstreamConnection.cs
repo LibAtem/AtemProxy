@@ -35,7 +35,7 @@ namespace AtemProxy
         }
         
         public delegate void CommandHandler(object sender, List<Tuple<ICommand, byte[]>> commands);
-        public delegate void AudioLevelsHandler(object sender, List<ICommand> levels);
+        public delegate void AudioLevelsHandler(object sender, List<byte[]> levels);
 
         public event CommandHandler OnReceive;
         public event AudioLevelsHandler OnAudioLevels;
@@ -67,7 +67,7 @@ namespace AtemProxy
                     }
 
                     var acceptedCommands = new List<Tuple<ICommand, byte[]>>();
-                    var audioLevels = new List<ICommand>();
+                    var audioLevels = new List<byte[]>();
                     foreach (ParsedCommandSpec rawCmd in pkt.Commands)
                     {
                         var cmd = CommandParser.Parse(Version, rawCmd);
@@ -79,7 +79,7 @@ namespace AtemProxy
 
                             if (AtemProxyUtil.AudioLevelCommands.Contains(cmd.GetType()))
                             {
-                                audioLevels.Add(cmd);
+                                audioLevels.Add(AtemProxyUtil.ParsedCommandToBytes(rawCmd));
                             }
                             else if (AtemProxyUtil.LockCommands.Contains(cmd.GetType()))
                             {
