@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Net;
+using LibAtem.Net;
 using log4net;
 
 namespace AtemProxy
@@ -8,27 +10,31 @@ namespace AtemProxy
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(ClientConnectionList));
 
-        private readonly Dictionary<EndPoint, AtemServerConnection> connections;
-
+        private readonly Dictionary<EndPoint, AtemServerConnection> _connections;
+        
+        public event AtemConnection.PacketHandler OnReceive;
+        
         public ClientConnectionList()
         {
-            connections = new Dictionary<EndPoint, AtemServerConnection>();
+            _connections = new Dictionary<EndPoint, AtemServerConnection>();
         }
 
         public AtemServerConnection FindOrCreateConnection(EndPoint ep, out bool isNew)
         {
-            lock (connections)
+            lock (_connections)
             {
                 AtemServerConnection val;
-                if (connections.TryGetValue(ep, out val))
+                if (_connections.TryGetValue(ep, out val))
                 {
                     isNew = false;
                     return val;
                 }
 
                 val = new AtemServerConnection(ep, 0x8008);// TODO - make dynamic
-                connections[ep] = val;
+                _connections[ep] = val;
                 val.OnDisconnect += RemoveTimedOut;
+
+                val.OnReceivePacket += OnReceive;
                 
                 Log.InfoFormat("New connection from {0}", ep);
 
@@ -39,9 +45,9 @@ namespace AtemProxy
 
         public void ClearAll()
         {
-            lock (connections)
+            lock (_connections)
             {
-                connections.Clear();
+                _connections.Clear();
             }
         }
 
@@ -53,18 +59,18 @@ namespace AtemProxy
 
             Log.InfoFormat("Lost connection to {0}", conn.Endpoint);
 
-            lock (connections)
+            lock (_connections)
             {
-                connections.Remove(conn.Endpoint);
+                _connections.Remove(conn.Endpoint);
             }
         }
         
         internal void QueuePings()
         {
-            lock (connections)
+            lock (_connections)
             {
                 var toRemove = new List<EndPoint>();
-                foreach (KeyValuePair<EndPoint, AtemServerConnection> conn in connections)
+                foreach (KeyValuePair<EndPoint, AtemServerConnection> conn in _connections)
                 {
                     if (conn.Value.HasTimedOut)
                     {
@@ -81,7 +87,24 @@ namespace AtemProxy
                 foreach (var ep in toRemove)
                 {
                     Log.InfoFormat("Lost connection to {0}", ep);
-                    connections.Remove(ep);
+                    _connections.Remove(ep);
+                }
+            }
+        }
+
+        public void Broadcast(IReadOnlyList<OutboundMessage> messages)
+        {
+            lock (_connections)
+            {
+                foreach (var conn in _connections)
+                {
+                    if (!conn.Value.HasTimedOut)
+                    {
+                        foreach (var msg in messages)
+                        {
+                            conn.Value.QueueMessage(msg);
+                        }
+                    }
                 }
             }
         }

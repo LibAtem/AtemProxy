@@ -21,24 +21,8 @@ namespace AtemProxy
         private readonly Thread _thread;
         private readonly ConcurrentQueue<ReceivedPacket> _pktQueue = new ConcurrentQueue<ReceivedPacket>();
 
-        private ProtocolVersion _version = ProtocolVersion.Minimum;
+        public ProtocolVersion Version { get; private set; } = ProtocolVersion.Minimum;
 
-        private static readonly Type[] AudioLevelCommands = new[]
-        {
-            typeof(FairlightMixerMasterLevelsCommand), typeof(FairlightMixerSourceLevelsCommand),
-            // typeof(FairlightMixerSendLevelsCommand)
-        };
-
-        private static readonly Type[] TransferCommands = new[]
-        {
-            typeof(DataTransferAbortCommand), typeof(DataTransferAckCommand),
-            typeof(DataTransferCompleteCommand), typeof(DataTransferDataCommand), typeof(DataTransferErrorCommand),
-            typeof(DataTransferDownloadRequestCommand), typeof(DataTransferUploadContinueCommand),
-            typeof(DataTransferUploadRequestCommand)
-        };
-
-        private static readonly Type[] LockCommands = new[] {typeof(LockObtainedCommand), typeof(LockStateSetCommand)};
-        
         public event AtemClient.ConnectedHandler OnConnection
         {
             add => _atem.OnConnection += value;
@@ -56,12 +40,6 @@ namespace AtemProxy
         public event CommandHandler OnReceive;
         public event AudioLevelsHandler OnAudioLevels;
         
-        private static byte[] ParsedCommandToBytes(ParsedCommandSpec cmd)
-        {
-            var build = new CommandBuilder(cmd.Name);
-            build.AddByte(cmd.Body);
-            return build.ToByteArray();
-        }
         
         public UpstreamConnection(string address)
         {
@@ -92,27 +70,27 @@ namespace AtemProxy
                     var audioLevels = new List<ICommand>();
                     foreach (ParsedCommandSpec rawCmd in pkt.Commands)
                     {
-                        var cmd = CommandParser.Parse(_version, rawCmd);
+                        var cmd = CommandParser.Parse(Version, rawCmd);
                         if (cmd != null)
                         {
                             // Ensure we know what version to parse with
                             if (cmd is VersionCommand vcmd)
-                                _version = vcmd.ProtocolVersion;
+                                Version = vcmd.ProtocolVersion;
 
-                            if (AudioLevelCommands.Contains(cmd.GetType()))
+                            if (AtemProxyUtil.AudioLevelCommands.Contains(cmd.GetType()))
                             {
                                 audioLevels.Add(cmd);
                             }
-                            else if (LockCommands.Contains(cmd.GetType()))
+                            else if (AtemProxyUtil.LockCommands.Contains(cmd.GetType()))
                             {
                             }
-                            else if (TransferCommands.Contains(cmd.GetType()))
+                            else if (AtemProxyUtil.TransferCommands.Contains(cmd.GetType()))
                             {
 
                             }
                             else
                             {
-                                acceptedCommands.Add(Tuple.Create(cmd, ParsedCommandToBytes(rawCmd)));
+                                acceptedCommands.Add(Tuple.Create(cmd, AtemProxyUtil.ParsedCommandToBytes(rawCmd)));
                             }
                         }
                         else
@@ -121,9 +99,7 @@ namespace AtemProxy
                             // It is unlikely to break anything, but command-id logic wont handle it well
                             Log.WarnFormat("Atem gave unknown command {0} {1}", rawCmd.Name, BitConverter.ToString(rawCmd.Body));
                             
-                            // TODO - this is not very optimal...
-                            //newPayload = newPayload.Concat(rawCmd.Body).ToArray();
-                            acceptedCommands.Add(Tuple.Create<ICommand, byte[]>(null, ParsedCommandToBytes(rawCmd)));
+                            acceptedCommands.Add(Tuple.Create<ICommand, byte[]>(null, AtemProxyUtil.ParsedCommandToBytes(rawCmd)));
                         }
                     }
 
@@ -155,9 +131,13 @@ namespace AtemProxy
             _thread.Start();
         }
 
-        public void ForwardPacket(ReceivedPacket pkt)
+        public void ForwardCommands(List<Tuple<ICommand, byte[]>> commands)
         {
-            // TODO
+            var messages = AtemProxyUtil.CommandsToMessages(commands.Select(c => c.Item2).ToList());
+            foreach (var msg in messages)
+            {
+                _atem.DirectQueueMessage(msg);   
+            }
         }
     }
 }

@@ -18,7 +18,8 @@ namespace AtemProxy
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(AtemServer));
 
-        private readonly ClientConnectionList _connections = new ClientConnectionList();
+        public ClientConnectionList Connections { get; } = new ClientConnectionList();
+        
         private CommandQueue _state;
         private bool _accept = false;
 
@@ -27,10 +28,6 @@ namespace AtemProxy
 
         // TODO - remove this list, and replace with something more sensible...
         private readonly List<Timer> timers = new List<Timer>();
-        
-        public delegate void CommandHandler(object sender, List<Tuple<ICommand, byte[]>> commands);
-
-        public event CommandHandler OnReceive;
 
         public AtemServer(CommandQueue state)
         {
@@ -40,7 +37,7 @@ namespace AtemProxy
         public void RejectConnections()
         {
             _accept = false;
-            _connections.ClearAll();
+            Connections.ClearAll();
         }
 
         public void AcceptConnections()
@@ -123,7 +120,7 @@ namespace AtemProxy
         {
             timers.Add(new Timer(o =>
             {
-                _connections.QueuePings();
+                Connections.QueuePings();
             }, null, 0, AtemConstants.PingInterval));
         }
         
@@ -154,7 +151,7 @@ namespace AtemProxy
                         // Check if we can accept it
                         if (!_accept) continue;
 
-                        AtemServerConnection conn = _connections.FindOrCreateConnection(v.RemoteEndPoint, out _);
+                        AtemServerConnection conn = Connections.FindOrCreateConnection(v.RemoteEndPoint, out _);
                         if (conn == null)
                             continue;
 
@@ -228,34 +225,11 @@ namespace AtemProxy
         {
             try
             {
-                var queuedCommands = _state.Values();
-                var count = queuedCommands.Count;
-                var sent = 0;
-                while (queuedCommands.Count > 0)
+                var messages = AtemProxyUtil.CommandsToMessages(_state.Values());
+                foreach (var msg in messages)
                 {
-                    var builder = new OutboundMessageBuilder();
-
-                    int removeCount = 0;
-                    foreach (byte[] data in queuedCommands)
-                    {
-                        if (!builder.TryAddData(data))
-                            break;
-
-                        removeCount++;
-                    }
-
-                    if (removeCount == 0)
-                    {
-                        throw new Exception("Failed to build message!");
-                    }
-
-                    queuedCommands.RemoveRange(0, removeCount);
-                    conn.QueueMessage(builder.Create());
-                    // Log.InfoFormat("Length {0} {1}", builder.currentLength , removeCount);
-                    sent++;
+                    conn.QueueMessage(msg);   
                 }
-
-                Log.InfoFormat("Sent all {1} commands to {0} in {2} packets", conn.Endpoint, count, sent);
             }
             catch (Exception e)
             {

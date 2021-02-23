@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using LibAtem;
 using LibAtem.Commands;
 using LibAtem.Util;
 using log4net;
@@ -29,9 +30,47 @@ namespace AtemProxy
             var upstream = new UpstreamConnection("10.42.13.95");
             
             var server = new AtemServer(currentStateCommands);
-            server.OnReceive += (sender, commands) =>
+            server.Connections.OnReceive += (sender, pkt) =>
             {
+                log.InfoFormat("Got packet from {0}", sender);
                 // TODO
+                
+                var acceptedCommands = new List<Tuple<ICommand, byte[]>>();
+                foreach (ParsedCommandSpec rawCmd in pkt.Commands)
+                {
+                    var cmd = CommandParser.Parse(upstream.Version, rawCmd);
+                    if (cmd != null)
+                    {
+                        if (AtemProxyUtil.AudioLevelCommands.Contains(cmd.GetType()))
+                        {
+                        }
+                        else if (AtemProxyUtil.LockCommands.Contains(cmd.GetType()))
+                        {
+                        }
+                        else if (AtemProxyUtil.TransferCommands.Contains(cmd.GetType()))
+                        {
+
+                        }
+                        else
+                        {
+                            acceptedCommands.Add(Tuple.Create(cmd, AtemProxyUtil.ParsedCommandToBytes(rawCmd)));
+                        }
+                    }
+                    else
+                    {
+                        // Unknown command, so forward it and hope!
+                        // It is unlikely to break anything, but command-id logic wont handle it well
+                        log.WarnFormat("Atem gave unknown command {0} {1}", rawCmd.Name,
+                            BitConverter.ToString(rawCmd.Body));
+
+                        acceptedCommands.Add(Tuple.Create<ICommand, byte[]>(null, AtemProxyUtil.ParsedCommandToBytes(rawCmd)));
+                    }
+                }
+
+                if (acceptedCommands.Count > 0)
+                {
+                    upstream.ForwardCommands(acceptedCommands);
+                }
             };
 
             string deviceName = "Test Proxy";
@@ -62,6 +101,9 @@ namespace AtemProxy
                         currentStateCommands.Set(unknownCommandId++, cmd.Item2);
                     }
                 }
+
+                var messages = AtemProxyUtil.CommandsToMessages(commands.Select(c => c.Item2).ToList());
+                server.Connections.Broadcast(messages);
             };
             
             upstream.Start();
@@ -105,45 +147,5 @@ namespace AtemProxy
             // Force the exit
             System.Environment.Exit(0);
         }
-    }
-    
-    public class CommandQueue
-    {
-        private readonly Dictionary<object, byte[]> _dict = new Dictionary<object, byte[]>();
-        private readonly List<object> _keys = new List<object>();
-
-        public void Clear()
-        {
-            lock (_dict)
-            {
-                _dict.Clear();
-                _keys.Clear();
-            }
-        }
-
-        public List<byte[]> Values()
-        {
-            lock (_dict)
-            {
-                return _keys.Select(k => _dict[k]).ToList();
-            }
-        }
-
-        public void Set(object key, byte[] value)
-        {
-            lock (_dict)
-            {
-                if (_dict.TryGetValue(key, out var tmpval))
-                {
-                    _dict[key] = value;
-                }
-                else
-                {
-                    _dict.Add(key, value);
-                    _keys.Add(key);
-                }
-            }
-        }
-
     }
 }
