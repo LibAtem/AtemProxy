@@ -1,4 +1,5 @@
 ﻿using System;
+
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
@@ -20,6 +21,11 @@ namespace AtemProxy
     {
         public static void Main(string[] args)
         {
+            if (args.Length == 0)
+            {
+                Console.WriteLine("Please include IP address for ATEM.");
+            }
+            string ipAddress = args[0];
             var logRepository = LogManager.GetRepository(Assembly.GetEntryAssembly());
             XmlConfigurator.Configure(logRepository, new FileInfo("log4net.config"));
 
@@ -29,7 +35,7 @@ namespace AtemProxy
             var currentStateCommands = new CommandQueue();
             var unknownCommandId = 1;
 
-            var upstream = new UpstreamConnection("10.42.13.95");
+            var upstream = new UpstreamConnection(ipAddress);
             
             var server = new AtemServer(currentStateCommands);
             server.Connections.OnReceive += (sender, pkt) =>

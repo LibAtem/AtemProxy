@@ -31,7 +31,7 @@ namespace AtemProxy
                     return val;
                 }
 
-                val = new AtemServerConnection(ep, 0x8008);// TODO - make dynamic
+                val = new AtemServerConnection(ep, 0x8008);// 0x8008 or 0x26B6? TODO - make dynamic
                 _connections[ep] = val;
                 val.OnDisconnect += RemoveTimedOut;
 
