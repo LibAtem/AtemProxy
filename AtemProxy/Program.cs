@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using LibAtem;
 using LibAtem.Commands;
 using LibAtem.Commands.Audio;
 using LibAtem.Commands.Audio.Fairlight;
-using LibAtem.Util;
 using log4net;
 using log4net.Config;
 
@@ -20,6 +17,13 @@ namespace AtemProxy
     {
         public static void Main(string[] args)
         {
+            if (args.Length == 0)
+            {
+                Console.WriteLine("Please include IP address for ATEM.");
+                return;
+            }
+
+            string ipAddress = args[0];
             var logRepository = LogManager.GetRepository(Assembly.GetEntryAssembly());
             XmlConfigurator.Configure(logRepository, new FileInfo("log4net.config"));
 
@@ -29,7 +33,7 @@ namespace AtemProxy
             var currentStateCommands = new CommandQueue();
             var unknownCommandId = 1;
 
-            var upstream = new UpstreamConnection("10.42.13.95");
+            var upstream = new UpstreamConnection(ipAddress);
             
             var server = new AtemServer(currentStateCommands);
             server.Connections.OnReceive += (sender, pkt) =>
