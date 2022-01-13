@@ -18,10 +18,11 @@ Note: It is recommended to connect directly to the atem for clients which are im
 The primary focus is to support 8.0+ fully. Older versions may work, but are no longer recommended.
 7.2 should work pretty well, but is not feature complete.
 
-Currently, 8.0.0 - 8.5.3 should work fully. Newer firmware may work, but could have issues with clients connecting after it has been running for a while.
+Currently, 8.0.0 - 8.6.4 should work fully. Newer firmware may work, but could have issues with clients connecting after it has been running for a while.
 
 ### Download
-When it is ready
+
+Check the releases tab
 
 ### Usage
 Coming soon

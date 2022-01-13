@@ -39,7 +39,6 @@ namespace AtemProxy
             server.Connections.OnReceive += (sender, pkt) =>
             {
                 log.InfoFormat("Got packet from {0}", sender);
-                // TODO
                 
                 var acceptedCommands = new List<Tuple<ICommand, byte[]>>();
                 foreach (ParsedCommandSpec rawCmd in pkt.Commands)
@@ -129,25 +128,6 @@ namespace AtemProxy
             upstream.Start();
             server.StartReceive();
             server.StartPingTimer();
-            
-            
-            /*
-            var client = new AtemClient("10.42.13.95");
-            client.Connect();
-            client.OnConnection += (sender) =>
-            {
-                client.SendCommand(new FairlightMixerSourceSetCommand()
-                {
-                    Mask = FairlightMixerSourceSetCommand.MaskFlags.Gain,
-                    Index = AudioSource.Mic1,
-                    SourceId = -256,
-                    Gain = -10
-                });
-                Console.WriteLine("Sent");
-            };
-
-            while(true){}
-            */
             
             Console.WriteLine("Press Ctrl+C to terminate...");
             

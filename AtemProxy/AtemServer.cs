@@ -45,7 +45,7 @@ namespace AtemProxy
             _accept = true;
         }
         
-         public void StartAnnounce(string modelName, string deviceId)	
+        public void StartAnnounce(string modelName, string deviceId)	
         {	
             _mdns.UseIpv4 = true;	
             _mdns.UseIpv6 = false;	
