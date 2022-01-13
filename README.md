@@ -24,6 +24,9 @@ Currently, 8.0.0 - 8.6.4 should work fully. Newer firmware may work, but could h
 
 Check the releases tab
 
+Or you can build manually for another runtime with a command like `dotnet publish -o "$(pwd)/dist" -c Release -r linux-arm`, replacing `linux-arm` with the runtime you need (see https://docs.microsoft.com/en-us/dotnet/core/rid-catalog as a reference)
+You will need to install https://dotnet.microsoft.com/en-us/download first, and have a fresh git clone of the repository
+
 ### Usage
 Coming soon
 
